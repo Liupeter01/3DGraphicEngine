@@ -4,10 +4,10 @@
 #include<obj_loader.hpp>
 #include<camera_ctrl.hpp>
 
-
 #ifdef _WIN32
 #include <windows.h>
 #include <cstdlib>
+#include <cstdio>
 #include <clocale>
 #endif
 

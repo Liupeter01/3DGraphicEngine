@@ -77,11 +77,26 @@ void  CameraControl::mouseButtonBeingPressedCallBack(GLFWwindow* window, int but
           }
 }
 
+void  CameraControl::mouseScrollCallBack(GLFWwindow* window, double xoffset, double yoffset)
+{
+          /*now currently, we only need to handle yoffset*/
+
+          /*yoffset should never equal to zero, if its zero then return*/
+          if (-1e-8 <= yoffset && yoffset <= 1e-8) {
+                    return;
+          }
+
+          this->zoom(static_cast<float>(yoffset));
+
+#ifdef  _DEBUG
+          printf("OpenGL Zoom MouseScroll CallBack: (x, y) = (%f, %f)\n", xoffset, yoffset);
+#endif // _DEBUG
+}
+
 void CameraControl::cursorMovementCallBack(GLFWwindow* window, double xpos, double ypos)
 {
-          if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) 
-          {
-                    auto new_pos = get_cursor_position(window);
+          auto new_pos = get_cursor_position(window);
+          if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
                     orbit(m_cursor_orbit_last_pos, new_pos);
 
 #ifdef  _DEBUG
@@ -93,9 +108,7 @@ void CameraControl::cursorMovementCallBack(GLFWwindow* window, double xpos, doub
 
                     m_cursor_orbit_last_pos = new_pos;                                 //update last position
           }
-          else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) 
-          {
-                    auto new_pos = get_cursor_position(window);
+          else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
                     drift(m_cursor_drift_last_pos, new_pos);
 
 #ifdef  _DEBUG
@@ -116,15 +129,32 @@ void CameraControl::keyboardButtonBeingPressCallBack(GLFWwindow* window, int key
                     glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
                     glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
 
-                    m_last_keyboard_opertion = key;
+                    m_pan_control = static_cast<PanDirection>(key);
 
-                    pan();
+                    this->pan();
 
 #ifdef  _DEBUG
-                    printf("OpenGL Pan KeyBoard Pressed CallBack: Key = (%d)\n", m_last_keyboard_opertion);
+                    printf("OpenGL Pan KeyBoard Pressed CallBack: Key = (%d)\n", static_cast<int>(m_pan_control));
 #endif // _DEBUG
 
           }
+}
+
+void CameraControl::windowsSizeChangedCallBack(GLFWwindow* window, int width, int height)
+{
+          glfwSetWindowSize(window, width, height);
+
+#ifdef  _DEBUG
+          printf("OpenGL Window Size Changed CallBack:  (Width: Height): (%d, %d)=>(%d, %d)\n",
+                    m_width, m_height, width, height
+          );
+#endif // _DEBUG
+
+          this->m_height = height;
+          this->m_width = width;
+
+          updateProjectionMatrix();
+          updateProjectionMatrix();
 }
 
 void CameraControl::orbit(glm::vec2 last_pos, glm::vec2 new_pos) 
@@ -209,7 +239,34 @@ void CameraControl::drift(glm::vec2 last_pos, glm::vec2 new_pos)
 
 void CameraControl::pan()
 {
+          const auto focus_zero = glm::normalize(m_world_center - m_camera_position);        //camers points to zero point!
+          const auto pitch_axis = glm::normalize(glm::cross(focus_zero, m_up_direction));      //pitch control
+          const auto yaw_axis = glm::normalize(glm::cross(pitch_axis, focus_zero));              //yaw control
 
+          glm::mat4 translate;
+          if (m_pan_control == PanDirection::UP || m_pan_control == PanDirection::DOWN) {
+                    translate = glm::translate(glm::mat4(1), glm::vec3(0.f, m_pan_control == PanDirection::UP ? m_pan_offset : -m_pan_offset, 0.f));
+          }
+          else if (m_pan_control == PanDirection::LEFT || m_pan_control == PanDirection::RIGHT) {
+                    translate = glm::translate(glm::mat4(1), glm::vec3(m_pan_control == PanDirection::RIGHT ? m_pan_offset : -m_pan_offset, 0.f, 0.f));
+          }
+          
+          m_camera_position = glm::vec3(translate * glm::vec4(m_camera_position, 1));
+          m_world_center = glm::vec3(translate * glm::vec4(m_world_center, 1));
+
+          /*update matrix*/
+          updateCameraViewMatrix();
+}
+
+void CameraControl::zoom(float yoffset)
+{
+          m_camera_position = m_world_center + (m_camera_position - m_world_center) / glm::vec3(glm::exp(m_zoom_scale * yoffset));
+
+#ifdef  _DEBUG
+          std::cout << "camera_coordinate: " << m_camera_position.x << " " << m_camera_position.y << " " << m_camera_position.z << std::endl;
+#endif // _DEBUG
+
+          updateCameraViewMatrix();
 }
 
 void CameraControl::convertMemberToCallBack()
@@ -237,6 +294,19 @@ void CameraControl::convertMemberToCallBack()
                     std::placeholders::_4,
                     std::placeholders::_5
           ));
+
+          /*user change windows size manually*/
+          m_func.windowsSizeChangedCallBack = std::move(std::bind(&CameraControl::windowsSizeChangedCallBack, this,
+                    std::placeholders::_1,
+                    std::placeholders::_2,
+                    std::placeholders::_3
+          ));
+
+          m_func.mouseScrollCallBack = std::move(std::bind(&CameraControl::mouseScrollCallBack, this,
+                    std::placeholders::_1,
+                    std::placeholders::_2,
+                    std::placeholders::_3
+          ));
 }
 
 void CameraControl::registerCallBackFunctions()
@@ -252,7 +322,17 @@ void CameraControl::registerCallBackFunctions()
           });
 
           glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
-           {
+          {
                      m_func.keyboardPressedCallBack(window, key, scancode, action, mods);
-           });
+          });
+
+          glfwSetFramebufferSizeCallback(m_window, [](GLFWwindow* window, int width, int height)
+          {
+                     m_func.windowsSizeChangedCallBack(window, width, height);
+          });
+
+          glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xoffset, double yoffset)
+          {
+                     m_func.mouseScrollCallBack(window, xoffset, yoffset);
+          });
 }

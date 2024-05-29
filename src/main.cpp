@@ -1,6 +1,4 @@
 #include <render_class.hpp>
-#include<cstdlib>
-#include<cstdio>
 
 int main()
 {          
