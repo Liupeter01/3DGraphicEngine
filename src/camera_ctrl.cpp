@@ -124,10 +124,11 @@ void CameraControl::cursorMovementCallBack(GLFWwindow* window, double xpos, doub
 
 void CameraControl::keyboardButtonBeingPressCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-          if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
+          if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
                     glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
                     glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
-                    glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+                    glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) &&
+                    (key == GLFW_KEY_UP || key == GLFW_KEY_DOWN || key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT)) {
 
                     m_pan_control = static_cast<PanDirection>(key);
 

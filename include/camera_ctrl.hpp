@@ -33,10 +33,13 @@ struct CallBackFunc {
 /*
 * Left Mouse Button                 : Left Mouse Button is for orbit control
 * Right Mouse Button               : Right Mouse Button is for drift control
-* KeyBoard up,down,left,right :  is for pan control
+* KeyBoard up,down,left,right(WSAD) :  is for pan control
 */
 
-/*pan control(up,down,left,right)*/
+/*
+ * pan control(up,down,left,right)
+ * WASD also supported
+*/
 enum class PanDirection {
           UP = GLFW_KEY_UP,
           DOWN = GLFW_KEY_DOWN,

@@ -3,7 +3,6 @@
 ## Description
 
 ## Example
-
 ``` C++
 #include <render_class.hpp>
 
@@ -31,13 +30,12 @@ int main()
 ```
 
 ## Developer Quick Start
-
+### Platform Support
+Windows, Linux, MacOS(Intel and M Serious Chip)
 ### Building 3D Graphic Engine
-
+``` bash
 git clone https://github.com/Liupeter01/3DGraphicEngine
-
 cd 3DGraphicEngine
-
 cmake -B build
-
 cmake --build build --parallel x
+```
