@@ -40,7 +40,7 @@ endif()
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp)
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS include/*.h include/*.hpp)
 
-add_executable(${PROJECT_NAME} ${sources} ${headers} "src/obj_loader.cpp" "src/camera_ctrl.cpp")
+add_executable(${PROJECT_NAME} ${sources} ${headers} "src/obj_loader.cpp" "src/camera_ctrl.cpp" "src/shader_loader.cpp" "src/tools.cpp"  "src/buffer_object.cpp")
 
 target_include_directories(${PROJECT_NAME} PUBLIC include glad/include glfw/include glm/include)
 

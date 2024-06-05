@@ -155,7 +155,6 @@ void CameraControl::windowsSizeChangedCallBack(GLFWwindow* window, int width, in
           this->m_width = width;
 
           updateProjectionMatrix();
-          updateProjectionMatrix();
 }
 
 void CameraControl::orbit(glm::vec2 last_pos, glm::vec2 new_pos) 

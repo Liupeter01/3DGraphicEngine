@@ -3,6 +3,7 @@
 #define _RENDER_CLASS_HPP_
 #include<obj_loader.hpp>
 #include<camera_ctrl.hpp>
+#include<shader_loader.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -11,12 +12,8 @@
 #include <clocale>
 #endif
 
-struct KeyBindings {
-          uint16_t keyboard_ctrl_button;          //control key on keyboard(ctrl, shift,alt)
-          uint16_t mouse_operation;               //bind control key and mouse key press
-};
-
-class RenderClass : public CameraControl
+class RenderClass 
+          : public CameraControl, public shader_loader
 {
 public:
           RenderClass(
@@ -40,12 +37,8 @@ public:
                     glm::mat4&& S
           );
 
-          void start_display(bool isFlat);
+          void start_display();
           void terminate_opengl();
-
-          static glm::vec3 perspective_divide(glm::vec4 vec);
-          static glm::vec3 normal_calcualtion(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc);
-          static glm::vec3 normal_calculation_with_weight(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc);
 
 private:
           void init_opengl_glfw();
@@ -53,13 +46,14 @@ private:
           void init_window(const std::string& windows_name, bool is_fullscreen);
           void set_advance_features();
           void enable_fullscreen();
-          void enable_smooth_mode();
-          void start_rendering(bool isFlat, bool realTimeNormalCalcualtion);
+          void start_rendering();
 
           /*has to be deployed before creating window*/
           void set_version();                                                    
 
 private:
+          shader_loader _shader;
+
           /*store object's name and it's obj_loader class*/
           std::multimap<std::string, obj_loader> _loaded_objs;
 };

@@ -4,28 +4,20 @@
 
 #include<iostream>
 #include<vector>
-#include<tuple>
-#include<glm/glm.hpp>
+#include<buffer_object.hpp>
 
 class RenderClass;
 
-class obj_loader 
+class obj_loader :public virtual_array_object
 {
           friend class RenderClass;
 
 public:
-          using VerTexType = std::vector<glm::vec3>;
-          using Normal =glm::vec3;
-          using Uv = glm::vec2;    
-          obj_loader(std::string obj_path) ;
+          obj_loader(std::string obj_path);
 
 public:
           void load_obj();
-
-          const VerTexType& getVertexSet();
-          const std::vector<glm::umat3x3>& getFacesMatrics();
-          const std::vector < Normal >& getNormalsSet();
-          const std::vector < Uv >& getUvSet();
+          void calculate_vertex_normal();
 
           void setObjectTranslateMatrix(glm::mat4&& T);
           void setObjectRotateMatrix(glm::mat4&& R);
@@ -37,23 +29,29 @@ private:
           void updateObjectModelMatrix();
 
 private:
-          //translate, rotate, scale
-          glm::mat4x4 _T, _R, _S;
-          glm::mat4x4 _model;
-
           std::string _path;
 
-          /*vertex coordinates for object*/
-          VerTexType _vertexSet;   
+          //translate, rotate, scale
+          glm::mat4x4 _T = glm::mat4(1);
+          glm::mat4x4 _R = glm::mat4(1);
+          glm::mat4x4 _S = glm::mat4(1);
 
-          /*normals for object*/
-          std::vector < Normal > _normals;
+          glm::mat4x4 _model = glm::mat4(1);
 
-          /*UV for object*/
-          std::vector < Uv > _uvs;
+          /*retrieve all data stored in  _vertexSet, _normals and _uvs*/
+          std::vector<MultiAttributeSOA> _vertices;
 
           /*include three triangles' indexes & nomals & uvs*/
-          std::vector<glm::umat3x3> _faces;
+          std::vector<glm::uvec3> _faces;
+
+          /*vertex coordinates for object*/
+          std::vector<glm::vec3> _vertexSet;
+
+          /*Face normals for object*/
+          std::vector < glm::vec3 > _normals;
+
+          /*UV for object*/
+          std::vector < glm::vec2 > _uvs;
 };
 
 #endif // !_OBJ_LOADER_HPP_

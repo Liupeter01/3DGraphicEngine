@@ -3,10 +3,24 @@
 #include<string>
 #include<sstream>
 
-obj_loader::obj_loader(std::string obj_path) 
-          :_path(obj_path),_T(glm::mat4(1)), _R(glm::mat4(1)), _S(glm::mat4(1))
+obj_loader::obj_loader(std::string obj_path)
+          :_path(obj_path), virtual_array_object()
 {
+          /*load object from file*/
           this->load_obj();
+
+#ifdef  _DEBUG
+          printf("ObjLoader loaded asset %s: %llu vertex, %llu faces Loaded!\n", obj_path.c_str(), _vertexSet.size(), _faces.size());
+#endif // _DEBUG
+
+          /*calculate vertex normal in order to generate OBJ_AVO*/
+          this->calculate_vertex_normal(); 
+
+          /*Bind vao structure*/
+          bind_vao();
+          bind_vbo(this->_vertices);
+          bind_ebo(this->_faces);
+          unbind_vao();
 }
 
 void obj_loader::load_obj() 
@@ -15,7 +29,6 @@ void obj_loader::load_obj()
 
           if (!in.is_open()) {
                     std::cout << "Obj File Read Error!" << std::endl;
-                    in.close();
                     throw std::runtime_error("Obj File Read Error!");
           }
 
@@ -30,33 +43,26 @@ void obj_loader::load_obj()
                               _vertexSet.push_back(std::move(vertex));
                     }
 
-                    /*Search for Triangle */
+                    /*Search for Faces(Triangle Indexes)*/
                     if (buffer.substr(0, 2) == "f ") {      //seperate ?/?/? ?/?/? ?/?/? ?/?/?
                               std::istringstream ss(buffer.substr(2));
                               std::string splitted;
-                              std::vector<glm::uvec3> faces_vec;
+                              std::vector<unsigned int> faces_vec;
                               while (std::getline(ss, splitted, ' ')) {  //handle ?/?/? each time
-                                        std::istringstream split_ss(splitted);
-                                        std::string slashsplitter;
-                                        glm::uvec3 vertex_vt_vn(1);          //store v/vt/vn data in a vec
-                                        std::size_t index = 0;
-                                        while (std::getline(split_ss, slashsplitter, '/') && index < 3) {  //handle ?/ each time
-                                                  std::istringstream(slashsplitter) >> vertex_vt_vn[index];
-                                                  --vertex_vt_vn[index];
-                                                  index++;
-                                        }
-                                        faces_vec.push_back(std::move(vertex_vt_vn));
+                                        unsigned int index = 0;
+                                        std::istringstream(splitted) >> index;
+                                        faces_vec.push_back(index - 1);
                               }
-                              for (std::size_t i = 1; i < faces_vec.size() - 1; ++i) {
-                                        glm::umat3x3 face = glm::umat3x3(faces_vec.at(0), faces_vec.at(i), faces_vec.at(i + 1));
-                                        _faces.push_back(face);
+                              for (std::size_t i = 2; i < faces_vec.size() ; ++i) {
+                                        glm::vec3 face(faces_vec[0], faces_vec[i - 1], faces_vec[i]);
+                                        _faces.push_back(std::move(face));
                               }
                     }
 
                     /*Search for Normals */
                     if (buffer.substr(0, 3) == "vn ") {
                               std::istringstream ss(buffer.substr(3));
-                              Normal normal;
+                              glm::vec3 normal;
                               ss >> normal.x >> normal.y >> normal.z;
                               _normals.push_back(std::move(normal));
                     }
@@ -64,7 +70,7 @@ void obj_loader::load_obj()
                     /*Search for UV*/
                     if (buffer.substr(0, 3) == "vt ") {
                               std::istringstream ss(buffer.substr(3));
-                              Uv uv;
+                              glm::vec2 uv;
                               ss >> uv.x >> uv.y;
                               _uvs.push_back(std::move(uv));
                     }
@@ -72,24 +78,25 @@ void obj_loader::load_obj()
           in.close();
 }
 
-const  obj_loader::VerTexType& obj_loader::getVertexSet()
+void obj_loader::calculate_vertex_normal() 
 {
-          return _vertexSet;
-}
+          /*calibrate the size of VAO*/
+          _vertices.resize(_vertexSet.size());    
 
-const std::vector<glm::umat3x3>& obj_loader::getFacesMatrics()
- {
-          return _faces;
- }
+          for (const auto& face_ind : _faces) {
+                    MultiAttributeSOA  obj1, obj2, obj3;
+                    obj1.position = std::move(_vertexSet.at(face_ind.x));
+                    obj2.position = std::move(_vertexSet.at(face_ind.y));
+                    obj3.position = std::move(_vertexSet.at(face_ind.z));
 
-const std::vector < typename obj_loader::Normal >& obj_loader::getNormalsSet()
- {
-          return _normals;
- }
+                    obj1.normal = glm::normalize(Tools::normal_calculation_with_weight(obj1.position, obj2.position, obj3.position));
+                    obj2.normal = glm::normalize(Tools::normal_calculation_with_weight(obj2.position, obj3.position, obj1.position));
+                    obj3.normal = glm::normalize(Tools::normal_calculation_with_weight(obj3.position, obj1.position, obj2.position));
 
-const std::vector <  typename obj_loader::Uv>& obj_loader::getUvSet()
-{
-          return _uvs;
+                    _vertices.at(face_ind.x) = std::move(obj1);
+                    _vertices.at(face_ind.y) = std::move(obj2);
+                    _vertices.at(face_ind.z) = std::move(obj3);
+          }
 }
 
 void obj_loader::updateObjectModelMatrix()

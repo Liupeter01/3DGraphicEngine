@@ -1,9 +1,11 @@
 #include<render_class.hpp>
 
 RenderClass::RenderClass(
-          std::string window_name, 
-          GLFWwindow* window, 
+          std::string window_name,
+          GLFWwindow* window,
           bool enable_fullscreen)
+          :shader_loader(),
+          CameraControl()
 {
           init_opengl_glfw();                  //glfw init
           set_version();                            //set the opengl version before init window
@@ -68,78 +70,42 @@ void RenderClass::set_object(std::string target_obj,
           (*it).second.setObjectScaleMatrix(std::move(S));
 }
 
-void RenderClass::start_rendering(bool isFlat, bool realTimeNormalCalcualtion)
+void RenderClass::start_rendering()
 {
-          glBegin(GL_TRIANGLES);
-          /*set color*/
-          glColor3f(0.9f, 0.6f, 0.1f);
-
           for (auto& object : _loaded_objs) 
           {
-                    for (const auto& index : object.second._faces) 
-                    {
-                              glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+                    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+                    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-                              const auto VM = getCameraViewMatrix() * object.second.getObjectModelMatrix();   //VM
-                              const auto VM_normal = glm::transpose(glm::inverse(glm::mat3x3(VM)));                 //VM transform
-                              const auto PVM_vertex = getProjectionMatrix() * VM;                                                  //PVM
+                   // Getting Uniform Variable From GLSL/VERT
+                    auto vert_light = glGetUniformLocation(m_program, "uniLightPath");
 
-                              const auto p1_pos = object.second._vertexSet.at(index[0][0]);
-                              const auto p2_pos = object.second._vertexSet.at(index[1][0]);
-                              const auto p3_pos = object.second._vertexSet.at(index[2][0]);
+                    //Getting In parameters from GLSL/VERT
+                    auto vert_position = glGetAttribLocation(m_program, "position");
+                    auto vert_normal = glGetAttribLocation(m_program, "normal");
+                    auto vert_texture = glGetAttribLocation(m_program, "texCoord");
+                    auto vert_color = glGetAttribLocation(m_program, "color");
 
-                              const auto p1_uv = object.second._uvs.at(index[0][1]);
-                              const auto p2_uv = object.second._uvs.at(index[1][1]);
-                              const auto p3_uv = object.second._uvs.at(index[2][1]);
+                    glUniform3fv(vert_light, 1, glm::value_ptr(getCameraViewMatrix()));
+                    glUniformMatrix4fv(glGetUniformLocation(m_program, "uniModel"), 1, GL_FALSE, glm::value_ptr(object.second.getObjectModelMatrix()));
+                    glUniformMatrix4fv(glGetUniformLocation(m_program, "uniView"), 1, GL_FALSE, glm::value_ptr(getCameraViewMatrix()));
+                    glUniformMatrix4fv(glGetUniformLocation(m_program, "uniProjection"), 1, GL_FALSE, glm::value_ptr(getProjectionMatrix()));
 
-                              /*When Smooth mode is enabled!!!*/
-                              if (!isFlat) {
+                    glUseProgram(m_program);
+                    glBindVertexArray(object.second.cur_object_vao()); 
 
-                                        /*the normal of vertexes have already calculated previously*/
-                                        const auto p1_vertex_normal = object.second._normals.at(index[0][0]);
-                                        const auto p2_vertex_normal = object.second._normals.at(index[1][0]);
-                                        const auto p3_vertex_normal = object.second._normals.at(index[2][0]);
-
-                                        /* normal*/
-                                        //glNormal3fv(glm::value_ptr(glm::transpose(glm::inverse(glm::mat3x3(_view * _model))) * p1_vertex_normal));
-                                        //glVertex3fv(glm::value_ptr(RenderClass::perspective_divide(_projection * _view * _model * glm::vec4(p1_pos, 1))));
-                                        
-                                        glNormal3fv(glm::value_ptr(VM_normal * p1_vertex_normal));
-                                        glVertex3fv(glm::value_ptr(perspective_divide(PVM_vertex * glm::vec4(p1_pos, 1))));
-
-                                        glNormal3fv(glm::value_ptr(VM_normal * p2_vertex_normal));
-                                        glVertex3fv(glm::value_ptr(perspective_divide(PVM_vertex * glm::vec4(p2_pos, 1))));
-
-                                        glNormal3fv(glm::value_ptr(VM_normal * p3_vertex_normal));
-                                        glVertex3fv(glm::value_ptr(perspective_divide(PVM_vertex * glm::vec4(p3_pos, 1))));
-                              }
-                              else {
-                                        /*When Flat mode is enabled!!!*/
-                                        glm::vec3 face_normal = normal_calcualtion(p1_pos, p2_pos, p3_pos);
-
-                                         /*only need to specify a single face normal*/
-                                        glNormal3fv(glm::value_ptr(face_normal));
-                                        glVertex3fv(glm::value_ptr(perspective_divide(PVM_vertex * glm::vec4(p1_pos, 1))));
-                                        glVertex3fv(glm::value_ptr(perspective_divide(PVM_vertex * glm::vec4(p2_pos, 1))));
-                                        glVertex3fv(glm::value_ptr(perspective_divide(PVM_vertex * glm::vec4(p3_pos, 1))));
-                              }
-                    }
+                    glDrawElements(GL_TRIANGLES, object.second.cur_object_element(), GL_UNSIGNED_INT, 0);
+                    object.second.unbind_vao();
           }
-          glEnd();
 }
 
-void RenderClass::start_display(bool isFlat)
+void RenderClass::start_display()
 {
           /*user enable smooth graphic mode*/
-          if (!isFlat) {
-                    enable_smooth_mode();
-          }
-
-          //glfwSwapInterval(1);
+          glfwSwapInterval(1);
 
           while (!glfwWindowShouldClose(m_window)) {
-                    //start_rendering(isFlat, true);
-                    start_rendering(isFlat, false);
+                    start_rendering();
 
                     glfwSwapBuffers(m_window);
                     glfwPollEvents();
@@ -168,34 +134,6 @@ void RenderClass::terminate_opengl()
           glfwTerminate();
 }
 
-glm::vec3 RenderClass::perspective_divide(glm::vec4 vec)
-{
-          return glm::vec3(vec.x / vec.w, vec.y / vec.w, vec.z / vec.w);
-}
-
-glm::vec3 RenderClass::normal_calcualtion(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc)
-{
-          const glm::vec3 AB = pb - pa;
-          const glm::vec3 AC = pc - pa;
-          return glm::normalize(glm::cross(AB, AC));
-}
-
-glm::vec3 RenderClass::normal_calculation_with_weight(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc)
-{
-          const glm::vec3 AB = pb - pa;
-          const glm::vec3 AC = pc - pa;
-          glm::vec3 normal = glm::cross(AB, AC);     //calculate normal vector
-
-          const float length = glm::length(normal);               //length of normal vector
-          const float arc_sin_degree = length / (glm::length(AB) * glm::length(AC));
-
-          /*length must not equal to zero*/
-          if (!(-(1e-8) <= length && length <= 1e-8)) {
-                    normal = normal * (glm::asin(arc_sin_degree) / length);
-          }
-          return normal;
-}
-
 void  RenderClass::enable_fullscreen()
 {
           GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -214,31 +152,6 @@ void  RenderClass::enable_fullscreen()
           }
 }
 
-void  RenderClass::enable_smooth_mode()
-{
-          for (auto& object : _loaded_objs) {
-                    /*clean existing normal and calculate vertex normal*/
-                    object.second._normals.resize(object.second._vertexSet.size());
-
-                    for (const auto& index : object.second._faces) {
-                              const auto p1_pos = object.second._vertexSet.at(index[0][0]);
-                              const auto p2_pos = object.second._vertexSet.at(index[1][0]);
-                              const auto p3_pos = object.second._vertexSet.at(index[2][0]);
-
-                              auto face_normal_with_weight = normal_calculation_with_weight(p1_pos, p2_pos, p3_pos);
-
-                              object.second._normals.at(index[0][0]) = face_normal_with_weight;
-                              object.second._normals.at(index[1][0]) = face_normal_with_weight;
-                              object.second._normals.at(index[2][0]) = face_normal_with_weight;
-                    }
-
-                    //do the normalize process(we only need the direction)
-                    for (auto& _normal : object.second._normals) {
-                              _normal = glm::normalize(_normal);
-                    }
-          }
-}
-
 void RenderClass::init_window(const std::string & windows_name, bool is_fullscreen)
 {
           /*default screen size is 1024*768*/ 
@@ -252,7 +165,7 @@ void RenderClass::init_window(const std::string & windows_name, bool is_fullscre
 
 void RenderClass::set_version()
 {
-          constexpr int version = 20;   //OpenGL 2.0
+          constexpr int version = 33;   //OpenGL 3.3
           glfwWindowHint(GL_SAMPLES, 4);          //MSAAx4
           glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
           glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_NATIVE_CONTEXT_API);
@@ -271,18 +184,12 @@ void RenderClass::set_version()
 
 void RenderClass::set_advance_features()
 {
-          //glEnable(GL_DEPTH_TEST);
-          //glDepthFunc(GL_LESS);
-
-          glEnable(GL_STENCIL_TEST);
+          glEnable(GL_DEPTH_TEST);
+          glDepthFunc(GL_LESS);
 
           glEnable(GL_MULTISAMPLE);
           glEnable(GL_BLEND);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-          glEnable(GL_LIGHTING);
-          glEnable(GL_LIGHT0);
-          glEnable(GL_COLOR_MATERIAL);
 
           glEnable(GL_CULL_FACE);
           glCullFace(GL_BACK);
