@@ -2,7 +2,7 @@
 #ifndef _CAMERA_CTRL_HPP_
 #define _CAMERA_CTRL_HPP_
 #include<glad/glad.h>
-#include<glfw/glfw3.h>
+#include<GLFW/glfw3.h>
 #include<glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -109,7 +109,7 @@ protected:
 private:
           /*up,down,left,right pan offset parameter*/
           float m_pan_offset = 0.05f;
-          enum class PanDirection m_pan_control;
+          PanDirection m_pan_control;
 
           /*zoom scale parameter*/
           float m_zoom_scale = 0.05f;
