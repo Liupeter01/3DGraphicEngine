@@ -6,52 +6,56 @@
 #include<vector>
 #include<buffer_object.hpp>
 
-class RenderClass;
+namespace GraphicEngine {
 
-class obj_loader :public virtual_array_object
-{
-          friend class RenderClass;
+          class RenderClass;
 
-public:
-          obj_loader(std::string obj_path);
+          class obj_loader :public virtual_array_object
+          {
+                    friend class RenderClass;
 
-public:
-          void load_obj();
-          void calculate_vertex_normal();
+          public:
+                    obj_loader(std::string obj_path);
 
-          void setObjectTranslateMatrix(glm::mat4&& T);
-          void setObjectRotateMatrix(glm::mat4&& R);
-          void setObjectScaleMatrix(glm::mat4&& S);
+          public:
+                    void load_obj();
+                    void calculate_vertex_normal();
 
-          const glm::mat4x4& getObjectModelMatrix();
+                    void setObjectTranslateMatrix(glm::mat4&& T);
+                    void setObjectRotateMatrix(glm::mat4&& R);
+                    void setObjectScaleMatrix(glm::mat4&& S);
 
-private:
-          void updateObjectModelMatrix();
+                    const glm::mat4x4& getObjectModelMatrix();
 
-private:
-          std::string _path;
+          private:
+                    void updateObjectModelMatrix();
 
-          //translate, rotate, scale
-          glm::mat4x4 _T = glm::mat4(1);
-          glm::mat4x4 _R = glm::mat4(1);
-          glm::mat4x4 _S = glm::mat4(1);
+          private:
+                    std::string _path;
 
-          glm::mat4x4 _model = glm::mat4(1);
+                    //translate, rotate, scale
+                    glm::mat4x4 _T = glm::mat4(1);
+                    glm::mat4x4 _R = glm::mat4(1);
+                    glm::mat4x4 _S = glm::mat4(1);
 
-          /*retrieve all data stored in  _vertexSet, _normals and _uvs*/
-          std::vector<MultiAttributeSOA> _vertices;
+                    glm::mat4x4 _model = glm::mat4(1);
 
-          /*include three triangles' indexes & nomals & uvs*/
-          std::vector<glm::uvec3> _faces;
+                    /*retrieve all data stored in  _vertexSet, _normals and _uvs*/
+                    std::vector<MultiAttributeSOA> _vertices;
 
-          /*vertex coordinates for object*/
-          std::vector<glm::vec3> _vertexSet;
+                    /*include three triangles' indexes & nomals & uvs*/
+                    std::vector<glm::uvec3> _faces;
 
-          /*Face normals for object*/
-          std::vector < glm::vec3 > _normals;
+                    /*vertex coordinates for object*/
+                    std::vector<glm::vec3> _vertexSet;
 
-          /*UV for object*/
-          std::vector < glm::vec2 > _uvs;
+                    /*Face normals for object*/
+                    std::vector < glm::vec3 > _normals;
+
+                    /*UV for object*/
+                    std::vector < glm::vec2 > _uvs;
+          };
+
 };
 
 #endif // !_OBJ_LOADER_HPP_

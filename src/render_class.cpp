@@ -1,6 +1,6 @@
 #include<render_class.hpp>
 
-RenderClass::RenderClass(
+GraphicEngine::RenderClass::RenderClass(
           std::string window_name,
           GLFWwindow* window,
           bool enable_fullscreen)
@@ -27,17 +27,17 @@ RenderClass::RenderClass(
 #endif // _DEBUG
 }
 
-RenderClass::~RenderClass()
+GraphicEngine::RenderClass::~RenderClass()
 {
           terminate_opengl();
 }
 
-void RenderClass::add_object(std::string obj_name)
+void GraphicEngine::RenderClass::add_object(std::string obj_name)
 {
           _loaded_objs.emplace(obj_name, obj_loader(obj_name));
 }
 
-void RenderClass::add_object(std::string obj_name,
+void GraphicEngine::RenderClass::add_object(std::string obj_name,
           glm::mat4&& T,
           glm::mat4&& R,
           glm::mat4&& S)
@@ -50,7 +50,7 @@ void RenderClass::add_object(std::string obj_name,
           _loaded_objs.emplace(obj_name, std::move(obj));
 }
 
-void RenderClass::set_object(std::string target_obj,
+void GraphicEngine::RenderClass::set_object(std::string target_obj,
           glm::mat4&& T,
           glm::mat4&& R,
           glm::mat4&& S)
@@ -70,15 +70,12 @@ void RenderClass::set_object(std::string target_obj,
           (*it).second.setObjectScaleMatrix(std::move(S));
 }
 
-void RenderClass::start_rendering()
+void GraphicEngine::RenderClass::start_rendering()
 {
           for (auto& object : _loaded_objs) 
           {
                     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
                     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-
-                   // Getting Uniform Variable From GLSL/VERT
-                    auto vert_light = glGetUniformLocation(m_program, "uniLightPath");
 
                     //Getting In parameters from GLSL/VERT
                     auto vert_position = glGetAttribLocation(m_program, "position");
@@ -86,7 +83,8 @@ void RenderClass::start_rendering()
                     auto vert_texture = glGetAttribLocation(m_program, "texCoord");
                     auto vert_color = glGetAttribLocation(m_program, "color");
 
-                    glUniform3fv(vert_light, 1, glm::value_ptr(getCameraViewMatrix()));
+                    glUniform3fv(glGetUniformLocation(m_program, "uniLightPath"), 1, glm::value_ptr(glm::vec3(get_cursor_position(m_window), 0.5f)));
+                    //glUniform3fv(glGetUniformLocation(m_program, "uniLightPath"), 1, glm::value_ptr(glm::vec3(0.f, 0.f, 0.5f)));
                     glUniformMatrix4fv(glGetUniformLocation(m_program, "uniModel"), 1, GL_FALSE, glm::value_ptr(object.second.getObjectModelMatrix()));
                     glUniformMatrix4fv(glGetUniformLocation(m_program, "uniView"), 1, GL_FALSE, glm::value_ptr(getCameraViewMatrix()));
                     glUniformMatrix4fv(glGetUniformLocation(m_program, "uniProjection"), 1, GL_FALSE, glm::value_ptr(getProjectionMatrix()));
@@ -99,7 +97,7 @@ void RenderClass::start_rendering()
           }
 }
 
-void RenderClass::start_display()
+void GraphicEngine::RenderClass::start_display()
 {
           /*user enable smooth graphic mode*/
           glfwSwapInterval(1);
@@ -112,7 +110,7 @@ void RenderClass::start_display()
           }
 }
 
-void RenderClass::init_opengl_glfw()
+void GraphicEngine::RenderClass::init_opengl_glfw()
 {
           if (!glfwInit()) {
                     terminate_opengl();
@@ -120,7 +118,7 @@ void RenderClass::init_opengl_glfw()
           }
 }
 
-void RenderClass::init_opengl_func()
+void GraphicEngine::RenderClass::init_opengl_func()
 {
           if (!gladLoadGL()) {
                     terminate_opengl();
@@ -128,13 +126,13 @@ void RenderClass::init_opengl_func()
           }
 }
 
-void RenderClass::terminate_opengl()
+void GraphicEngine::RenderClass::terminate_opengl()
 {
           glfwDestroyWindow(m_window);
           glfwTerminate();
 }
 
-void  RenderClass::enable_fullscreen()
+void  GraphicEngine::RenderClass::enable_fullscreen()
 {
           GLFWmonitor* monitor = glfwGetPrimaryMonitor();
           if (monitor != nullptr) 
@@ -152,7 +150,7 @@ void  RenderClass::enable_fullscreen()
           }
 }
 
-void RenderClass::init_window(const std::string & windows_name, bool is_fullscreen)
+void GraphicEngine::RenderClass::init_window(const std::string & windows_name, bool is_fullscreen)
 {
           /*default screen size is 1024*768*/ 
           m_window = glfwCreateWindow(m_width, m_height, windows_name.c_str(), nullptr, nullptr);
@@ -163,7 +161,7 @@ void RenderClass::init_window(const std::string & windows_name, bool is_fullscre
           }
 }
 
-void RenderClass::set_version()
+void GraphicEngine::RenderClass::set_version()
 {
           constexpr int version = 33;   //OpenGL 3.3
           glfwWindowHint(GL_SAMPLES, 4);          //MSAAx4
@@ -182,7 +180,7 @@ void RenderClass::set_version()
           glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE);
 }
 
-void RenderClass::set_advance_features()
+void GraphicEngine::RenderClass::set_advance_features()
 {
           glEnable(GL_DEPTH_TEST);
           glDepthFunc(GL_LESS);

@@ -1,10 +1,10 @@
 #include<shader_loader.hpp>
 
-shader_loader::shader_loader()
+GraphicEngine::shader_loader::shader_loader()
           :m_program(-1) 
 {}
 
-shader_loader::~shader_loader()
+GraphicEngine::shader_loader::~shader_loader()
 {
           /*delete shader*/
           for (const auto shader : m_shader) {
@@ -17,19 +17,19 @@ shader_loader::~shader_loader()
           }
 }
 
-void shader_loader::add_vertex_shader(const std::string& path)
+void GraphicEngine::shader_loader::add_vertex_shader(const std::string& path)
 {
           unsigned int shader = glCreateShader(GL_VERTEX_SHADER);
           add_shader_source(shader, path);
 }
 
-void shader_loader::add_fragment_shader(const std::string& path)
+void GraphicEngine::shader_loader::add_fragment_shader(const std::string& path)
 {
           unsigned int shader = glCreateShader(GL_FRAGMENT_SHADER);
           add_shader_source(shader, path);
 }
 
-void shader_loader::create_shader_program()
+void GraphicEngine::shader_loader::create_shader_program()
 {
           m_program = glCreateProgram();
           for (const auto& shader : m_shader) {
@@ -48,7 +48,7 @@ void shader_loader::create_shader_program()
           }
 }
 
-void  shader_loader::add_shader_source(const unsigned int shader, const std::string& path)
+void  GraphicEngine::shader_loader::add_shader_source(const unsigned int shader, const std::string& path)
 {
           std::string glsl = Tools::read_glsl_file(path);
           auto status = Tools::load_shader_source(shader, glsl);

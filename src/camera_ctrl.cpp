@@ -1,6 +1,6 @@
 #include<camera_ctrl.hpp>
 
-CallBackFunc CameraControl::m_func = {};
+GraphicEngine::CallBackFunc GraphicEngine::CameraControl::m_func = {};
 
 #ifdef  _DEBUG
 std::ostream& operator<<(std::ostream& os, const glm::mat4& mat4) {
@@ -13,7 +13,7 @@ std::ostream& operator<<(std::ostream& os, const glm::mat4& mat4) {
 }
 #endif // _DEBUG
 
-CameraControl::CameraControl(GLFWwindow* window)
+GraphicEngine::CameraControl::CameraControl(GLFWwindow* window)
           :m_window(window)
 {
           /*load member function to C style callback*/
@@ -24,32 +24,33 @@ CameraControl::CameraControl(GLFWwindow* window)
           updateProjectionMatrix();
 }
 
-CameraControl::~CameraControl()
+GraphicEngine::CameraControl::~CameraControl()
 {
 
 }
 
-void CameraControl::updateCameraViewMatrix()
+void GraphicEngine::CameraControl::updateCameraViewMatrix()
 {
           m_view = std::move(glm::lookAt(m_camera_position, m_world_center, m_up_direction));
 }
 
-void CameraControl::updateProjectionMatrix() 
+void GraphicEngine::CameraControl::updateProjectionMatrix()
 {
           m_projection = std::move(glm::perspective(glm::radians(m_fov), static_cast<float>(m_width / m_height), m_near, m_far));
 }
 
-const glm::mat4& CameraControl::getCameraViewMatrix()
+const glm::mat4& GraphicEngine::CameraControl::getCameraViewMatrix()
 {
           return m_view;
 }
 
-const glm::mat4& CameraControl::getProjectionMatrix()
+const glm::mat4& GraphicEngine::CameraControl::getProjectionMatrix()
 {
+          updateProjectionMatrix();
           return m_projection;
 }
 
-glm::vec2 CameraControl::get_cursor_position(GLFWwindow* window)
+glm::vec2 GraphicEngine::CameraControl::get_cursor_position(GLFWwindow* window)
 {
           double x_pos, y_pos;
           glfwGetCursorPos(window, &x_pos, &y_pos);
@@ -59,7 +60,7 @@ glm::vec2 CameraControl::get_cursor_position(GLFWwindow* window)
                     static_cast<float>(2 * (m_height - y_pos) / m_height - 1));
 }
 
-void  CameraControl::mouseButtonBeingPressedCallBack(GLFWwindow* window, int button, int action, int mods)
+void  GraphicEngine::CameraControl::mouseButtonBeingPressedCallBack(GLFWwindow* window, int button, int action, int mods)
 {
           if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
                     m_cursor_orbit_last_pos =get_cursor_position(window);
@@ -77,7 +78,7 @@ void  CameraControl::mouseButtonBeingPressedCallBack(GLFWwindow* window, int but
           }
 }
 
-void  CameraControl::mouseScrollCallBack(GLFWwindow* window, double xoffset, double yoffset)
+void  GraphicEngine::CameraControl::mouseScrollCallBack(GLFWwindow* window, double xoffset, double yoffset)
 {
           /*now currently, we only need to handle yoffset*/
 
@@ -93,7 +94,7 @@ void  CameraControl::mouseScrollCallBack(GLFWwindow* window, double xoffset, dou
 #endif // _DEBUG
 }
 
-void CameraControl::cursorMovementCallBack(GLFWwindow* window, double xpos, double ypos)
+void GraphicEngine::CameraControl::cursorMovementCallBack(GLFWwindow* window, double xpos, double ypos)
 {
           auto new_pos = get_cursor_position(window);
           if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
@@ -122,7 +123,7 @@ void CameraControl::cursorMovementCallBack(GLFWwindow* window, double xpos, doub
           }
 }
 
-void CameraControl::keyboardButtonBeingPressCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
+void GraphicEngine::CameraControl::keyboardButtonBeingPressCallBack(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
           if ((glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
                     glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
@@ -141,7 +142,7 @@ void CameraControl::keyboardButtonBeingPressCallBack(GLFWwindow* window, int key
           }
 }
 
-void CameraControl::windowsSizeChangedCallBack(GLFWwindow* window, int width, int height)
+void GraphicEngine::CameraControl::windowsSizeChangedCallBack(GLFWwindow* window, int width, int height)
 {
           glfwSetWindowSize(window, width, height);
 
@@ -154,10 +155,12 @@ void CameraControl::windowsSizeChangedCallBack(GLFWwindow* window, int width, in
           this->m_height = height;
           this->m_width = width;
 
+          glfwSetWindowSize(window, this->m_width, this->m_height);
+
           updateProjectionMatrix();
 }
 
-void CameraControl::orbit(glm::vec2 last_pos, glm::vec2 new_pos) 
+void GraphicEngine::CameraControl::orbit(glm::vec2 last_pos, glm::vec2 new_pos)
 {
           const auto focus_zero = glm::normalize(m_world_center - m_camera_position);        //camers points to zero point!
           const auto pitch_axis = glm::normalize(glm::cross(focus_zero, m_up_direction));      //pitch control
@@ -194,7 +197,7 @@ void CameraControl::orbit(glm::vec2 last_pos, glm::vec2 new_pos)
           updateCameraViewMatrix();
 }
 
-void CameraControl::drift(glm::vec2 last_pos, glm::vec2 new_pos)
+void GraphicEngine::CameraControl::drift(glm::vec2 last_pos, glm::vec2 new_pos)
 {
           const auto focus_zero = glm::normalize(m_world_center - m_camera_position);        //camers points to zero point!
           const auto pitch_axis = glm::normalize(glm::cross(focus_zero, m_up_direction));      //pitch control
@@ -237,7 +240,7 @@ void CameraControl::drift(glm::vec2 last_pos, glm::vec2 new_pos)
           updateCameraViewMatrix();
 }
 
-void CameraControl::pan()
+void GraphicEngine::CameraControl::pan()
 {
           const auto focus_zero = glm::normalize(m_world_center - m_camera_position);        //camers points to zero point!
           const auto pitch_axis = glm::normalize(glm::cross(focus_zero, m_up_direction));      //pitch control
@@ -258,7 +261,7 @@ void CameraControl::pan()
           updateCameraViewMatrix();
 }
 
-void CameraControl::zoom(float yoffset)
+void GraphicEngine::CameraControl::zoom(float yoffset)
 {
           m_camera_position = m_world_center + (m_camera_position - m_world_center) / glm::vec3(glm::exp(m_zoom_scale * yoffset));
 
@@ -269,7 +272,7 @@ void CameraControl::zoom(float yoffset)
           updateCameraViewMatrix();
 }
 
-void CameraControl::convertMemberToCallBack()
+void GraphicEngine::CameraControl::convertMemberToCallBack()
 {
           /*handle left mouse button pressed*/
           m_func.leftButtonPressedCallBack = std::move(std::bind(&CameraControl::mouseButtonBeingPressedCallBack, this,
@@ -309,7 +312,7 @@ void CameraControl::convertMemberToCallBack()
           ));
 }
 
-void CameraControl::registerCallBackFunctions()
+void GraphicEngine::CameraControl::registerCallBackFunctions()
 {
           glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods)
            {

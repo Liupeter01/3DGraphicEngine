@@ -1,19 +1,19 @@
 #include<tools.hpp>
 #include<fstream>
 
-glm::vec3 Tools::perspective_divide(glm::vec4 vec)
+glm::vec3 GraphicEngine::Tools::perspective_divide(glm::vec4 vec)
 {
           return glm::vec3(vec.x / vec.w, vec.y / vec.w, vec.z / vec.w);
 }
 
-glm::vec3 Tools::normal_calcualtion(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc)
+glm::vec3 GraphicEngine::Tools::normal_calcualtion(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc)
 {
           const glm::vec3 AB = pb - pa;
           const glm::vec3 AC = pc - pa;
           return glm::normalize(glm::cross(AB, AC));
 }
 
-glm::vec3 Tools::normal_calculation_with_weight(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc)
+glm::vec3 GraphicEngine::Tools::normal_calculation_with_weight(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc)
 {
           const glm::vec3 AB = pb - pa;
           const glm::vec3 AC = pc - pa;
@@ -29,7 +29,7 @@ glm::vec3 Tools::normal_calculation_with_weight(glm::vec3 pa, glm::vec3 pb, glm:
           return normal;
 }
 
-std::string Tools::read_glsl_file(const std::string& path)
+std::string GraphicEngine::Tools::read_glsl_file(const std::string& path)
 {
           std::ifstream inf(path);
           if (!inf.is_open()) {
@@ -42,7 +42,7 @@ std::string Tools::read_glsl_file(const std::string& path)
           };
 }
 
-int Tools::load_shader_source(const int shader, const std::string& glsl_code)
+int GraphicEngine::Tools::load_shader_source(const int shader, const std::string& glsl_code)
 {
           int status;         //compile status
 
@@ -58,7 +58,7 @@ int Tools::load_shader_source(const int shader, const std::string& glsl_code)
           return status;
 }
 
-int  Tools::link_shader(const int program)
+int  GraphicEngine::Tools::link_shader(const int program)
 {
           int status;         //compile status
           glLinkProgram(program);
@@ -67,7 +67,7 @@ int  Tools::link_shader(const int program)
           return status;
 }
 
-std::string Tools::get_shader_error_info(const int shader)
+std::string GraphicEngine::Tools::get_shader_error_info(const int shader)
 {
           /*get shader info log length*/
           int log_length;                //using glGetShaderiv and get log length
@@ -83,7 +83,7 @@ std::string Tools::get_shader_error_info(const int shader)
           return error_info;
 }
 
-std::string Tools::get_link_error_info(const int program)
+std::string GraphicEngine::Tools::get_link_error_info(const int program)
 {
           /*get shader info log length*/
           int log_length;                //using glGetShaderiv and get log length

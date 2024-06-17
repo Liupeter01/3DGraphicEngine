@@ -3,7 +3,7 @@
 #include<string>
 #include<sstream>
 
-obj_loader::obj_loader(std::string obj_path)
+GraphicEngine::obj_loader::obj_loader(std::string obj_path)
           :_path(obj_path), virtual_array_object()
 {
           /*load object from file*/
@@ -23,7 +23,7 @@ obj_loader::obj_loader(std::string obj_path)
           unbind_vao();
 }
 
-void obj_loader::load_obj() 
+void GraphicEngine::obj_loader::load_obj()
 {
           std::ifstream in(_path);
 
@@ -78,7 +78,7 @@ void obj_loader::load_obj()
           in.close();
 }
 
-void obj_loader::calculate_vertex_normal() 
+void GraphicEngine::obj_loader::calculate_vertex_normal()
 {
           /*calibrate the size of VAO*/
           _vertices.resize(_vertexSet.size());    
@@ -99,28 +99,28 @@ void obj_loader::calculate_vertex_normal()
           }
 }
 
-void obj_loader::updateObjectModelMatrix()
+void GraphicEngine::obj_loader::updateObjectModelMatrix()
 {
           _model = _T * _R * _S;
 }
 
-const glm::mat4x4& obj_loader::getObjectModelMatrix()
+const glm::mat4x4& GraphicEngine::obj_loader::getObjectModelMatrix()
 {
           updateObjectModelMatrix();
           return _model;
 }
 
-void obj_loader::setObjectTranslateMatrix(glm::mat4&& T)
+void GraphicEngine::obj_loader::setObjectTranslateMatrix(glm::mat4&& T)
 {
           _T = T;
 }
 
-void obj_loader::setObjectRotateMatrix(glm::mat4&& R)
+void GraphicEngine::obj_loader::setObjectRotateMatrix(glm::mat4&& R)
 {
           _R = R;
 }
 
-void obj_loader::setObjectScaleMatrix(glm::mat4&& S)
+void GraphicEngine::obj_loader::setObjectScaleMatrix(glm::mat4&& S)
 {
           _S = S;
 }
