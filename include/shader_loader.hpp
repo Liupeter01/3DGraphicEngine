@@ -11,7 +11,10 @@ namespace GraphicEngine {
 
           class shader_loader {
                     friend class RenderClass;
-                    std::vector<unsigned int> m_shader;
+                    
+                    /*copying restricted resources are not acceptable!!*/
+                    shader_loader(const shader_loader&) = delete;
+                    shader_loader& operator=(const shader_loader&) = delete;
 
           public:
                     shader_loader();
@@ -28,6 +31,7 @@ namespace GraphicEngine {
           protected:
                     unsigned int m_program;
                     std::vector<unsigned int> m_shaders;
+                    std::vector<unsigned int> m_shader;
           };
 
 };
